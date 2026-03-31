@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { 
   Search, GraduationCap, School, BookOpen, Hash, 
   Printer, Star, User, Calendar, X, Download, 
-  ChevronLeft, Info, Baby, CheckCircle2, Sparkles,
+  ChevronLeft, Info, Baby, CheckCircle2, Sparkles, PlusCircle,
   Award, TrendingUp, ShieldCheck, RefreshCw,
   Heart, Users, Brain, Activity, ClipboardList, Lightbulb
 } from "lucide-react";
@@ -396,10 +396,46 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
                     })}
                   </div>
 
-                  <div style={{marginTop: 35, textAlign: "right"}}>
-                    <span style={{fontSize: 18, fontWeight: 800, color: "#64748b", marginRight: 20}}>GPA:</span>
-                    <span style={{fontSize: 48, fontWeight: 950, color: "#1e293b"}}>{gpa}</span>
-                  </div>
+                   <div style={{marginTop: 30, background: "linear-gradient(to right, #f8fafc, #fff, #f8fafc)", padding: "20px 30px", borderRadius: 32, border: "1.5px solid #e2e8f0", boxShadow: "0 20px 50px rgba(0,0,0,0.03)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, position: "relative"}}>
+                      <div style={{display: "flex", alignItems: "center", gap: 30, flex: 1}}>
+                         <div style={{display: "flex", alignItems: "center", gap: 15}}>
+                            <div style={{width: 48, height: 48, borderRadius: 16, background: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #d1fae5"}}>
+                               <BookOpen size={24} style={{color: "#059669"}}/>
+                            </div>
+                            <div>
+                               <div style={{fontSize: 10, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 2}}>หน่วยกิตพื้นฐาน</div>
+                               <div style={{fontSize: 24, fontWeight: 950, color: "#1e293b"}}>{displayRows.filter(r => r.type === "วิชาพื้นฐาน").reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0)} <span style={{fontSize: 14, fontWeight: 800, color: "#94a3b8"}}>นก.</span></div>
+                            </div>
+                         </div>
+                         
+                         <div style={{height: 40, width: 1.5, background: "#e2e8f0"}} />
+
+                         <div style={{display: "flex", alignItems: "center", gap: 15}}>
+                            <div style={{width: 48, height: 48, borderRadius: 16, background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #dbeafe"}}>
+                               <PlusCircle size={24} style={{color: "#2563eb"}}/>
+                            </div>
+                            <div>
+                               <div style={{fontSize: 10, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 2}}>หน่วยกิตเพิ่มเติม</div>
+                               <div style={{fontSize: 24, fontWeight: 950, color: "#1e293b"}}>{displayRows.filter(r => r.type === "วิชาเพิ่มเติม").reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0)} <span style={{fontSize: 14, fontWeight: 800, color: "#94a3b8"}}>นก.</span></div>
+                            </div>
+                         </div>
+                      </div>
+
+                      <div style={{background: "linear-gradient(135deg, #4f46e5, #7c3aed)", padding: "12px 35px", borderRadius: 24, color: "#fff", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 15px 35px rgba(79, 70, 229, 0.3)", position: "relative", overflow: "hidden"}}>
+                         {/* Subtle Glow Sparkle */}
+                         <div style={{position: "absolute", top: -10, right: -10, opacity: 0.2}}>
+                            <Award size={60} strokeWidth={1} />
+                         </div>
+                         
+                         <div style={{textAlign: "right", position: "relative", zIndex: 1}}>
+                            <div style={{fontSize: 11, fontWeight: 800, opacity: 0.8, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 2}}>เกรดเฉลี่ย</div>
+                            <div style={{fontSize: 48, fontWeight: 950, lineHeight: 1, letterSpacing: "-1px"}}>{gpa}</div>
+                         </div>
+                         <div style={{width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)"}}>
+                            <Award size={24} style={{color: "#fff"}} />
+                         </div>
+                      </div>
+                   </div>
                 </>
               )}
            </div>
