@@ -151,10 +151,11 @@ export default function ReportsPage({
   const displayRows = [];
   if (isKG) {
     fullCurriculum.forEach((item, i) => {
-      const grade = grades.find(g => g.subject_id == item.id);
+      const isAct = item.activity_type !== undefined;
+      const grade = grades.find(g => isAct ? g.activity_id == item.id : g.subject_id == item.id);
       displayRows.push({
         no: i + 1,
-        name: item.subject_name || item.activity_type,
+        name: isAct ? item.activity_type : item.subject_name,
         result: grade ? (grade.grade || "-") : "-"
       });
     });
@@ -239,7 +240,32 @@ export default function ReportsPage({
             <label style={{display:"block", marginBottom:10, fontSize:14, fontWeight:800}}>เลือกชั้นเรียน</label>
             <select value={filterClass} onChange={e => {setFilterClass(e.target.value); setFilterStudentId('');}} className="adm-input">
               <option value="">-- เลือกชั้นเรียน --</option>
-              {classrooms.map(c => <option key={c.id} value={c.room_name}>{c.room_name}</option>)}
+              {classrooms.sort((a, b) => {
+                const getLevelPriority = (name = "") => {
+                  if (name.includes("อนุบาล")) return 0;
+                  if (name.includes("ประถม") || name.startsWith("ป.")) return 1;
+                  if (name.includes("มัธยม") || name.startsWith("ม.")) return 2;
+                  return 99;
+                };
+                const getLevelNum = (name = "") => {
+                  const m = name.match(/(\d+)/);
+                  return m ? parseInt(m[1]) : 999;
+                };
+                const getRoomNum = (name = "") => {
+                  const m = name.match(/\/(\d+)/);
+                  return m ? parseInt(m[1]) : 0;
+                };
+
+                const pA = getLevelPriority(a.room_name);
+                const pB = getLevelPriority(b.room_name);
+                if (pA !== pB) return pA - pB;
+
+                const nA = getLevelNum(a.room_name);
+                const nB = getLevelNum(b.room_name);
+                if (nA !== nB) return nA - nB;
+
+                return getRoomNum(a.room_name) - getRoomNum(b.room_name);
+              }).map(c => <option key={c.id} value={c.room_name}>{c.room_name}</option>)}
             </select>
           </div>
           <div style={{minWidth:280}}>
@@ -312,16 +338,26 @@ export default function ReportsPage({
                 </div>
                 <div style={{display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:12, marginBottom:15}}>
                   {[
-                    { label: "ด้านร่างกาย", color: "#ecfdf5", text: "#10b981", val: displayRows[0]?.result || "3" },
-                    { label: "ด้านอารมณ์-จิตใจ", color: "#eff6ff", text: "#3b82f6", val: displayRows[1]?.result || "3" },
-                    { label: "ด้านสังคม", color: "#fffbeb", text: "#f59e0b", val: displayRows[2]?.result || "3" },
-                    { label: "ด้านสติปัญญา", color: "#f5f3ff", text: "#8b5cf6", val: displayRows[3]?.result || "3" }
-                  ].map((card, i) => (
-                    <div key={i} style={{background:card.color, borderRadius:16, padding:15, textAlign:"center", border:"1px solid rgba(0,0,0,0.05)"}}>
-                      <div style={{fontSize:13, fontWeight:900, color:card.text, marginBottom:8}}>{card.label}</div>
-                      <div style={{fontSize:32, fontWeight:900, color:card.text}}>{card.val}</div>
-                    </div>
-                  ))}
+                    { label: "ด้านร่างกาย", color: "#ecfdf5", text: "#10b981", key: "ร่างกาย" },
+                    { label: "ด้านอารมณ์-จิตใจ", color: "#eff6ff", text: "#3b82f6", key: "อารมณ์" },
+                    { label: "ด้านสังคม", color: "#fffbeb", text: "#f59e0b", key: "สังคม" },
+                    { label: "ด้านสติปัญญา", color: "#f5f3ff", text: "#8b5cf6", key: "สติปัญญา" }
+                  ].map((card, i) => {
+                    // Universal Search: Scan BOTH subjects and activities for the developmental keyword
+                    const grade = grades.find(g => {
+                      const subjName = g.subjects?.subject_name || "";
+                      const actName = g.activities?.activity_type || g.activities?.activity_name || "";
+                      return subjName.includes(card.key) || actName.includes(card.key);
+                    });
+                    const val = grade ? (grade.grade || "-") : "-";
+                    
+                    return (
+                      <div key={i} style={{background:card.color, borderRadius:16, padding:15, textAlign:"center", border:"1px solid rgba(0,0,0,0.05)"}}>
+                        <div style={{fontSize:13, fontWeight:900, color:card.text, marginBottom:8}}>{card.label}</div>
+                        <div style={{fontSize:32, fontWeight:900, color:card.text}}>{val}</div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div style={{border:"2px dashed #cbd5e1", borderRadius:20, padding:20, textAlign:"center", background:"#f8fafc", marginBottom:20}}>
                    <div style={{fontSize:15, fontWeight:800, color:"#64748b", marginBottom:8}}>สรุปพัฒนาการภาพรวม</div>

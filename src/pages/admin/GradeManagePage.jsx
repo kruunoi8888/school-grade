@@ -40,10 +40,9 @@ const GradeRow = React.memo(({
   
   return (
     <tr key={s.id} style={{transition:"background 0.2s"}}>
-      <td style={{position:"sticky",left:0,zIndex:40,background:"#fff", textAlign:"center", color:"#94a3b8", fontWeight:700, borderBottom:"1px solid #f1f5f9"}}> {sIdx+1} </td>
-      <td style={{position:"sticky",left:50,zIndex:40,background:"#fff", borderBottom:"1px solid #f1f5f9", borderRight:"1px solid #f1f5f9", boxShadow:"4px 0 8px rgba(0,0,0,0.02)"}}>
-        <div style={{fontWeight:800, fontSize:15, color:"#1e293b"}}>{s.prefix}{s.first_name} {s.last_name}</div>
-        <div style={{fontSize:12,color:"#94a3b8", fontWeight:600}}>{s.student_id}</div>
+      <td className="sticky-col-final" style={{left:0, textAlign:"center", color:"#1e293b", fontWeight:700, borderBottom:"1px solid #f1f5f9", width:60, minWidth:60}}> {sIdx+1} </td>
+      <td className="sticky-col-final" style={{left:60, borderBottom:"1px solid #f1f5f9", borderRight:"3px solid #e2e8f0", minWidth:250}}>
+        <div style={{fontWeight:800, fontSize:15, color:"#1e293b", whiteSpace:"nowrap", paddingRight:40, paddingLeft:10}}>{s.prefix}{s.first_name} {s.last_name}</div>
       </td>
       {subjects.map((sub, subIdx) => {
         const typeKey = sub.is_activity ? 'act' : 'sub';
@@ -87,10 +86,7 @@ const GradeRow = React.memo(({
                       onChange={e => onScore(s.id, typeKey, targetId, currentSem, e.target.value)}
                       onKeyDown={e => handleKeyDown(e, sIdx, subIdx)}
                       onPaste={e => handlePaste(e, sIdx, subIdx)}
-                      style={{
-                        width:74, padding:"10px 0", borderRadius:10, border:"1.5px solid #cbd5e1",
-                        textAlign:"center", fontWeight:900, fontSize:16, outlineColor:"#4f46e5"
-                      }} 
+                      className="grade-input-v2"
                       placeholder="-"
                     />
                     {val && !isNaN(parseFloat(val)) && (
@@ -275,67 +271,104 @@ export default function GradeManagePage({
   };
 
   const handlePaste = (e, sIdx, subIdx) => {
-    const rows = e.clipboardData.getData('Text').trim().split(/\r?\n/);
+    e.preventDefault();
+    const clipboardData = e.clipboardData.getData('Text');
+    const rows = clipboardData.trim().split(/\r?\n/);
     const newDraft = { ...draftGrades };
+    
     rows.forEach((row, rO) => {
-      row.split('\t').forEach((val, cO) => {
-        const tS = sIdx + rO; const tSub = subIdx + cO;
+      // Split by Tab (\t) or Multiple Spaces (\s+)
+      const items = row.split(/\t|\s{1,}/);
+      items.forEach((val, cO) => {
+        const tS = sIdx + rO;
+        const tSub = subIdx + cO;
         if (tS < students.length && tSub < subjects.length) {
-          const s = students[tS]; const sub = subjects[tSub];
+          const s = students[tS];
+          const sub = subjects[tSub];
           const typeKey = sub.is_activity ? 'act' : 'sub';
           const targetId = sub.is_activity ? sub.original_id : sub.id;
-          newDraft[`${s.id}_${typeKey}_${targetId}_${currentSem}`] = val.trim();
+          // Only take valid score/grade patterns (Numeric, ผ, มผ, or Kinder assessments)
+          const cleanVal = val.trim();
+          if (cleanVal !== "") {
+            newDraft[`${s.id}_${typeKey}_${targetId}_${currentSem}`] = cleanVal;
+          }
         }
       });
     });
     setDraftGrades(newDraft);
+    setIsEditMode(true);
   };
 
-  const handleSaveAll = async () => {
-    try {
-      setSaving(true); if (!activeYear) throw new Error("No Year");
-      const allUpserts = Object.keys(draftGrades).map(key => {
-        const parts = key.split('_');
-        const sem = parseInt(parts.pop());
-        const targetIdRaw = parts.pop();
-        const type = parts.pop();
-        const sid = parts.join('_'); // Sid might have underscores in UUID
-
-        const val = draftGrades[key] || "";
-        const numericVal = parseFloat(val);
-        let fGrade = val;
-        // Keep raw value as fGrade for all numeric inputs
-        if (type === 'sub' && !isNaN(numericVal) && !activeCurriculum.includes('kindergarten')) {
-          fGrade = String(numericVal);
-        }
-
-        const existing = gradeRows.find(r => 
-          String(r.student_id) === String(sid) && 
-          (type === 'sub' ? String(r.subject_id) === String(targetIdRaw) : String(r.activity_id) === String(targetIdRaw)) && 
-          String(r.academic_year_id) === String(activeYear.id) && 
-          String(r.semester) === String(sem)
-        );
+    // Robust Save Logic: Manually handle ID generation to bypass DB identity errors
+    const handleSaveAll = async () => {
+      try {
+        setSaving(true);
+        if (!activeYear) throw new Error("กรุณาเลือกปีการศึกษา");
         
-        const row = { 
-          student_id: sid, 
-          subject_id: type === 'sub' ? parseInt(targetIdRaw) : null, 
-          activity_id: type === 'act' ? parseInt(targetIdRaw) : null, 
-          grade: fGrade, academic_year_id: activeYear.id, semester: sem 
-        };
-        if (existing?.id) row.id = existing.id;
-        return row;
-      });
+        // 1. Fetch current Max ID as fail-safe for broken DB identity
+        const { data: maxData } = await supabase
+          .from('grades')
+          .select('id')
+          .order('id', { ascending: false })
+          .limit(1);
+        let nextId = (maxData?.[0]?.id || 0) + 1;
 
-      const filtered = allUpserts.filter(r => r.grade !== "" || r.id);
-      if (filtered.length > 0) {
-        const { error } = await supabase.from('grades').upsert(filtered);
-        if (error) throw error;
+        // 2. Map draft to upsert format
+        const allUpserts = Object.keys(draftGrades).map(key => {
+          const parts = key.split('_');
+          const sem = parseInt(parts.pop());
+          const targetIdRaw = parts.pop();
+          const type = parts.pop();
+          const sid = parts.join('_');
+          const val = draftGrades[key];
+
+          if (val === "" || val === undefined || val === null) return null;
+
+          const existing = gradeRows.find(r => 
+            String(r.student_id) === String(sid) && 
+            (type === 'sub' ? String(r.subject_id) === String(targetIdRaw) : String(r.activity_id) === String(targetIdRaw)) && 
+            String(r.academic_year_id) === String(activeYear.id) && 
+            String(r.semester) === String(sem)
+          );
+
+          const row = { 
+            student_id: sid, 
+            academic_year_id: activeYear.id, 
+            semester: sem,
+            grade: String(val)
+          };
+
+          if (type === 'sub') {
+            row.subject_id = parseInt(targetIdRaw);
+            row.activity_id = null;
+          } else {
+            row.activity_id = parseInt(targetIdRaw);
+            row.subject_id = null;
+          }
+          
+          if (existing?.id) {
+            row.id = existing.id;
+          } else {
+            row.id = nextId++; // Assign manual ID for safe INSERT
+          }
+          return row;
+        }).filter(r => r !== null);
+
+        if (allUpserts.length > 0) {
+          const { error } = await supabase.from('grades').upsert(allUpserts);
+          if (error) throw error;
+        }
+        
+        await fetchClassroomData(); 
+        setSuccess(true); 
+        setTimeout(() => setSuccess(false), 3000); 
+        setIsEditMode(false);
+      } catch (err) { 
+        alert('เกิดข้อผิดพลาดในการบันทึก: ' + err.message); 
+      } finally { 
+        setSaving(false); 
       }
-      
-      await fetchClassroomData(); 
-      setSuccess(true); setTimeout(() => setSuccess(false), 3000); setIsEditMode(false);
-    } catch (err) { alert('Error: ' + err.message); } finally { setSaving(false); }
-  };
+    };
 
   const deleteStudentGrades = async (stud) => {
     if (!window.confirm("ลบเกรดของนักเรียนคนนี้ใช่หรือไม่?")) return;
@@ -388,6 +421,33 @@ export default function GradeManagePage({
 
   return (
     <div className="adm-container" style={{maxWidth:1140}}>
+      <style>{`
+        /* Remove Spin Buttons for cleaner look */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .grade-input-v2 {
+          width: 85px; padding: 12px 6px; border-radius: 12px; border: 2px solid #e2e8f0;
+          text-align: center; font-weight: 950; font-size: 18px; color: #0f172a;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); outline: none; background: #fff;
+        }
+        .grade-input-v2:hover { border-color: #94a3b8; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .grade-input-v2:focus { border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); background: #fefce8; transform: scale(1.1); z-index: 10; position: relative; }
+
+        .sticky-col-final {
+          position: sticky !important;
+          background-color: white !important;
+          z-index: 999 !important;
+          box-shadow: 6px 0 12px rgba(0,0,0,0.08);
+          isolation: isolate;
+        }
+        .header-sticky-final {
+          position: sticky !important;
+          background-color: #f8fafc !important;
+          z-index: 1000 !important;
+          box-shadow: 6px 0 12px rgba(0,0,0,0.1);
+        }
+      `}</style>
       <header className="adm-header" style={{marginBottom:32}}>
         <div style={{display:"flex", alignItems:"center", gap:16}}>
           <div style={{width:56, height:56, borderRadius:16, background:"linear-gradient(135deg,#6366f1,#4f46e5)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 10px 20px rgba(99,102,241,0.2)"}}>
@@ -456,8 +516,8 @@ export default function GradeManagePage({
             <table style={{width:"100%", borderCollapse:"collapse"}}>
               <thead>
                 <tr style={{background:"#f8fafc"}}>
-                  <th style={{position:"sticky",left:0,zIndex:50,background:"#f8fafc",padding:12, width:50, borderBottom:"2px solid #e2e8f0"}}>#</th>
-                  <th style={{position:"sticky",left:50,zIndex:50,background:"#f8fafc",padding:12, textAlign:"left", minWidth:200, borderBottom:"2px solid #e2e8f0", borderRight:"1px solid #e2e8f0", boxShadow:"4px 0 8px rgba(0,0,0,0.05)"}}>ชื่อ-นามสกุล</th>
+                  <th className="header-sticky-final" style={{left:0, padding:12, width:60, minWidth:60, borderBottom:"2px solid #e2e8f0"}}>เลขที่</th>
+                  <th className="header-sticky-final" style={{left:60, padding:12, textAlign:"left", minWidth:250, borderBottom:"2px solid #e2e8f0", borderRight:"1px solid #e2e8f0"}}>ชื่อ-นามสกุล</th>
                   {subjects.map(sub => (
                     <th key={sub.id} style={{padding:12, textAlign:"center", minWidth:120, borderBottom:"2px solid #e2e8f0"}}>
                       <div style={{fontSize:10, color:"#64748b"}}>{sub.subject_code}</div>

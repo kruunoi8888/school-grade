@@ -333,8 +333,7 @@ function StudentsPage({ classrooms: propClassrooms, assignments: propAssignments
           <table className="adm-table" style={{minWidth:800}}>
             <thead><tr style={{minWidth:900, display:"table-row"}}>
               <th style={{width:40}}>#</th>
-              <th style={{width:80}}>รหัส</th>
-              <th style={{minWidth:160}}>ชื่อ-นามสกุล</th>
+              <th style={{minWidth:180}}>ชื่อ-นามสกุล</th>
               <th style={{width:70, textAlign:"center"}}>เพศ</th>
               <th style={{width:110}}>ชั้นเรียน</th>
               <th style={{minWidth:160}}>ครูประจำชั้น</th>
@@ -362,11 +361,10 @@ function StudentsPage({ classrooms: propClassrooms, assignments: propAssignments
               {filtered.map((s,i)=>(
                 <tr key={s?.id}>
                   <td style={{color:"#94a3b8",fontSize:13}}>{i+1}</td>
-                  <td><span style={{fontFamily:"monospace",background:"#f1f5f9",padding:"2px 9px",borderRadius:6,fontSize:12}}>{s.student_id}</span></td>
-                  <td style={{minWidth:140}}>
-                    <div style={{fontWeight:700, fontSize:13.5, color:"#1e293b", lineHeight:1.2}}>
+                  <td style={{minWidth:180}}>
+                    <div style={{fontWeight:700, fontSize:14.5, color:"#1e293b", lineHeight:1.2}}>
                       <div>{s.prefix}{s.first_name}</div>
-                      <div style={{fontSize:12, color:"#64748b", fontWeight:500}}>{s.last_name}</div>
+                      <div style={{fontSize:12, color:"#64748b", fontWeight:500, marginTop:2}}>{s.last_name}</div>
                     </div>
                   </td>
                   <td style={{textAlign:"center"}}>
@@ -510,12 +508,10 @@ function StudentsPage({ classrooms: propClassrooms, assignments: propAssignments
               </div>
               <div style={{height:1,background:"#f1f5f9",marginTop:16}}/>
             </div>
-            <div className="st-body" style={{flex:1}}>
-              {addMode==="single" && (
-                <>
-                  <div><div className="adm-label">รหัสนักเรียน <span style={{color:"#ef4444"}}>*</span></div>
-                    <input className="adm-input" placeholder="เช่น 67000009" value={form.student_id} onChange={e=>setForm(f=>({...f,student_id:e.target.value}))}/></div>
-                  <div><div className="adm-label">เพศ</div>
+              <div className="st-body" style={{flex:1}}>
+                {addMode==="single" && (
+                  <>
+                    <div><div className="adm-label">เพศ</div>
                     <div style={{display:"flex",gap:10}}>
                       {["ชาย","หญิง"].map(g=>(
                         <button key={g} onClick={()=>setForm(f=>({...f,gender:g,prefix:g==="ชาย"?"เด็กชาย":"เด็กหญิง"}))} style={{
@@ -605,10 +601,6 @@ function StudentsPage({ classrooms: propClassrooms, assignments: propAssignments
               <button onClick={()=>setShowModal(false)} style={{width:32,height:32,borderRadius:9,border:"1.5px solid #e2e8f0",background:"#f8fafc",display:"flex",alignItems:"center",justifyContent:"center",color:"#64748b"}}>✕</button>
             </div>
             <div className="st-body" style={{padding:"24px 26px"}}>
-              <div style={{marginBottom:16}}>
-                <label className="adm-label">รหัสประจำตัวนักเรียน</label>
-                <input className="adm-input" value={form.student_id} onChange={e=>setForm(f=>({...f,student_id:e.target.value}))} placeholder="เช่น 67000001"/>
-              </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 <div><label className="adm-label">ชื่อ</label><input className="adm-input" value={form.first_name} onChange={e=>setForm(f=>({...f,first_name:e.target.value}))}/></div>
                 <div><label className="adm-label">นามสกุล</label><input className="adm-input" value={form.last_name} onChange={e=>setForm(f=>({...f,last_name:e.target.value}))}/></div>

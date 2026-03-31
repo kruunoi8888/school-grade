@@ -3,7 +3,7 @@ import { Home, GraduationCap, LogIn, LogOut, User, Settings } from "lucide-react
 
 function PublicNav({ page, setPage, onLoginClick, user, onGoAdmin, onLogout, schoolInfo }) {
   return (
-    <header style={{
+    <header className="public-nav no-print" style={{
       background:"#fff", borderBottom:"1px solid #e2e8f0",
       position:"sticky", top:0, zIndex:100,
       boxShadow:"0 2px 16px rgba(0,0,0,.07)"
