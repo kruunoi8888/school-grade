@@ -84,6 +84,37 @@ function StudentsPage({ classrooms: propClassrooms, assignments: propAssignments
     return (a.student_id || "").localeCompare(b.student_id || "");
   });
 
+  const handleDeleteAll = async () => {
+    if (filtered.length === 0) return;
+    
+    const count = filtered.length;
+    const confirmMessage = `🔴 คำเตือน: คุณแน่ใจหรือไม่ที่จะลบรายชื่อนักเรียนทั้งหมดจำนวน ${count} คน ที่แสดงผลอยู่ในขณะนี้? \n(ข้อมูลเกรดของนักเรียนเหล่านี้จะถูกลบออกไปด้วย)`;
+    
+    if (!window.confirm(confirmMessage)) return;
+    if (!window.confirm(`⚠️ โปรดยืนยันขั้นเด็ดขาด: ต้องการลบนักเรียน ${count} คนนี้ใช่หรือไม่?`)) return;
+
+    try {
+      setSaving(true);
+      const idsToDelete = filtered.map(s => s.id);
+      
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .in('id', idsToDelete);
+        
+      if (error) throw error;
+      
+      setStudents(ss => ss.filter(s => !idsToDelete.includes(s.id)));
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (error) {
+      console.error("Error deleting all students:", error);
+      alert("ไม่สามารถลบข้อมูลนักเรียนทั้งหมดได้: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Open Add modal ──
   const openAdd = () => {
     const cid = filterClass ? +filterClass : (liveClassrooms[0]?.id ?? 1);
@@ -307,7 +338,20 @@ function StudentsPage({ classrooms: propClassrooms, assignments: propAssignments
               <th style={{width:70, textAlign:"center"}}>เพศ</th>
               <th style={{width:110}}>ชั้นเรียน</th>
               <th style={{minWidth:160}}>ครูประจำชั้น</th>
-              <th style={{width:110, textAlign:"center"}}>จัดการ</th>
+              <th style={{width:110, textAlign:"center"}}>
+                <div style={{fontSize:11, color:"#94a3b8", marginBottom:4}}>จัดการ</div>
+                <button 
+                  onClick={handleDeleteAll} 
+                  title="ลบนักเรียนทั้งหมดที่แสดงผลอยู่"
+                  style={{
+                    width:32, height:32, borderRadius:8, border:"1.5px solid #fecaca", 
+                    background:"#fef2f2", color:"#ef4444", cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto"
+                  }}
+                >
+                  <Trash2 size={16}/>
+                </button>
+              </th>
             </tr></thead>
             <tbody>
               {filtered.length===0 && (
