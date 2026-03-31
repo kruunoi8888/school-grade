@@ -248,12 +248,15 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
         .rating-box { display: inline-flex; gap: 4px; color: #fbbf24; }
         .mobile-grade-card { background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; display: none; }
         .info-grid-responsive { display: grid; grid-template-columns: auto auto auto; gap: 40px; margin-bottom: 25px; justify-content: center; }
+        
+        .no-mobile { display: block; }
 
         .decor-blob { position: absolute; border-radius: 50%; filter: blur(80px); z-index: 1; opacity: 0.4; }
         .blob-1 { width: 400px; height: 400px; background: #4f46e5; top: -100px; left: -100px; }
         .blob-2 { width: 300px; height: 300px; background: #ec4899; bottom: -50px; right: -50px; }
 
         @media (max-width: 768px) {
+          .no-mobile { display: none; }
           .official-table-container { display: none; }
           .mobile-grade-card { display: block; }
           .hero-title-v2 { font-size: 3rem; }
@@ -286,9 +289,15 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
            <div className="decor-blob blob-2"></div>
            
            <div style={{maxWidth: 1000, width: "100%", margin: "0 auto", position: "relative", zIndex: 10, textAlign: "center"}} className="animate-up">
-              <div style={{display: "inline-flex", background: "rgba(255,255,255,0.05)", padding: "10px 25px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.1)", marginBottom: 30, alignItems: "center", gap: 10}}>
-                 <Sparkles size={20} className="animate-pulse" style={{color: "#fbbf24"}} />
-                 <span style={{color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase"}}>School Information System</span>
+              {/* Subtle Floating Elements */}
+              <div style={{position: "absolute", top: "10%", left: "5%", opacity: 0.03, animation: "float 8s ease-in-out infinite"}} className="no-mobile">
+                 <GraduationCap size={180} color="#fff" />
+              </div>
+              <div style={{position: "absolute", bottom: "20%", right: "8%", opacity: 0.03, animation: "float 10s ease-in-out infinite alternate"}} className="no-mobile">
+                 <BookOpen size={150} color="#fff" />
+              </div>
+              <div style={{position: "absolute", top: "40%", right: "15%", opacity: 0.02, animation: "float 12s ease-in-out infinite"}} className="no-mobile">
+                 <Award size={120} color="#fff" />
               </div>
 
               <h1 className="hero-title-v2">
