@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { 
   Search, GraduationCap, School, BookOpen, Hash, 
   Printer, Star, User, Calendar, X, Download, 
-  ChevronLeft, Info, Baby, CheckCircle2, Sparkles, PlusCircle,
+  ChevronLeft, ChevronRight, Info, Baby, CheckCircle2, Sparkles, PlusCircle,
   Award, TrendingUp, ShieldCheck, RefreshCw,
   Heart, Users, Brain, Activity, ClipboardList, Lightbulb
 } from "lucide-react";
@@ -177,24 +177,89 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
     <div style={{background: "#f8fafc", minHeight: "100vh", fontFamily: "'Sarabun', sans-serif", paddingBottom: 60}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@700;900&family=Sarabun:wght@400;700;800&display=swap');
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .hero-title-big { font-size: clamp(2.5rem, 8vw, 5.5rem); font-weight: 950; font-family: 'Kanit'; line-height: 1; text-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .search-container-v4 { background: #fff; padding: 16px; border-radius: 40px; border: 4px solid #4f46e5; display: flex; gap: 16px; max-width: 800px; margin: 0 auto; box-shadow: 0 30px 60px rgba(79, 70, 229, 0.4); }
+        
+        @keyframes gradMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes float { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 20px rgba(79, 70, 229, 0.2); } 50% { box-shadow: 0 0 40px rgba(79, 70, 229, 0.4); } 100% { box-shadow: 0 0 20px rgba(79, 70, 229, 0.2); } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes rotate-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .animate-up { animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-rotate { animation: rotate-slow 20s linear infinite; }
+        
+        .hero-title-v2 { font-size: clamp(2rem, 7vw, 5rem); font-weight: 900; font-family: 'Kanit'; line-height: 1.1; margin-bottom: 20px; }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradMove 5s ease infinite; }
+        
+        .search-glass {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 35px;
+          padding: 12px;
+          display: flex;
+          gap: 12px;
+          max-width: 800px;
+          margin: 0 auto;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          transition: all 0.4s ease;
+        }
+        .search-glass:focus-within {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.4);
+          transform: translateY(-5px);
+          box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .search-input-v5 {
+          flex: 1;
+          background: transparent;
+          border: none;
+          color: #fff;
+          font-size: 20px;
+          font-weight: 700;
+          padding: 0 20px 0 60px;
+          height: 64px;
+          outline: none;
+        }
+        .search-input-v5::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+        .search-btn-v5 {
+          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          border: none;
+          border-radius: 25px;
+          color: #fff;
+          font-weight: 950;
+          font-size: 18px;
+          padding: 0 40px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        .search-btn-v5:hover { transform: scale(1.05); filter: brightness(1.1); box-shadow: 0 15px 25px rgba(79, 70, 229, 0.4); }
+        .search-btn-v5:active { transform: scale(0.98); }
+
         .official-table { width: 100%; border-collapse: collapse; border: 2px solid #000; table-layout: fixed; }
         .official-table th, .official-table td { border: 1.2px solid #000; padding: 6px 4px; line-height: 1.2; word-break: break-word; }
         .rating-box { display: inline-flex; gap: 4px; color: #fbbf24; }
         .mobile-grade-card { background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; display: none; }
         .info-grid-responsive { display: grid; grid-template-columns: auto auto auto; gap: 40px; margin-bottom: 25px; justify-content: center; }
 
+        .decor-blob { position: absolute; border-radius: 50%; filter: blur(80px); z-index: 1; opacity: 0.4; }
+        .blob-1 { width: 400px; height: 400px; background: #4f46e5; top: -100px; left: -100px; }
+        .blob-2 { width: 300px; height: 300px; background: #ec4899; bottom: -50px; right: -50px; }
+
         @media (max-width: 768px) {
           .official-table-container { display: none; }
           .mobile-grade-card { display: block; }
-          .hero-title-big { font-size: 3.5rem; }
-          .search-container-v4 { flex-direction: column; border-radius: 24px; padding: 12px; }
-          .search-container-v4 input { font-size: 18px !important; padding-left: 55px !important; height: 60px !important; }
-          .search-container-v4 svg { left: 20px !important; width: 24px !important; height: 24px !important; top: 18px !important; }
-          .search-container-v4 button { height: 60px; font-size: 18px; }
+          .hero-title-v2 { font-size: 3rem; }
+          .search-glass { flex-direction: column; border-radius: 24px; padding: 10px; gap: 8px; }
+          .search-input-v5 { font-size: 18px; padding-left: 50px; height: 54px; }
+          .search-btn-v5 { height: 54px; width: 100%; justify-content: center; }
           .info-grid-responsive { grid-template-columns: 1fr 1.2fr 2.5fr; gap: 15px; }
           .report-document-public { padding: 30px 20px !important; border-radius: 24px !important; }
         }
@@ -215,40 +280,81 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
       `}</style>
 
       {!student && (
-        <section style={{background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)", padding: "140px 24px", textAlign: "center", color: "#fff", borderRadius: "0 0 80px 80px", position: "relative", overflow: "hidden"}}>
-           <div style={{maxWidth: 1000, margin: "0 auto", position: "relative", zIndex: 10}} className="animate-in">
-              <img src={schoolInfo?.logo} style={{width: 90, height: 90, marginBottom: 20}} alt="logo" />
-              <h1 className="hero-title-big">
-                 <span style={{color: "#38bdf8"}}>ตรวจสอบ</span>
-                 <span style={{color: "#4f46e5", background: "#fff", padding: "4px 24px", borderRadius: 20}}>ผลการเรียน</span>
+        <section style={{background: "#0f172a", minHeight: "100vh", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px"}}>
+           {/* Decorative Elements */}
+           <div className="decor-blob blob-1"></div>
+           <div className="decor-blob blob-2"></div>
+           
+           <div style={{maxWidth: 1000, width: "100%", margin: "0 auto", position: "relative", zIndex: 10, textAlign: "center"}} className="animate-up">
+              <div style={{display: "inline-flex", background: "rgba(255,255,255,0.05)", padding: "10px 25px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.1)", marginBottom: 30, alignItems: "center", gap: 10}}>
+                 <Sparkles size={20} className="animate-pulse" style={{color: "#fbbf24"}} />
+                 <span style={{color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase"}}>School Information System</span>
+              </div>
+
+              <h1 className="hero-title-v2">
+                 <div style={{color: "#fff", opacity: 0.9}}>ตรวจสอบ</div>
+                 <div className="gradient-text">ผลการเรียนออนไลน์</div>
               </h1>
-              <div style={{fontSize: 22, fontWeight: 800, marginTop: 25, color: "#93c5fd"}}>{schoolInfo?.name || "โรงเรียนวัดสามัคคีธรรม"}</div>
-              <div className="search-container-v4" style={{marginTop: 40}}>
-                 <div style={{flex: 2, position: "relative"}}>
-                    <input placeholder="รหัสนักเรียน หรือชื่อ-นามสกุล" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSearch()} style={{width: "100%", height: 74, borderRadius: 30, border: "none", padding: "0 24px 0 74px", fontSize: 24, fontWeight: 900, outline: "none", color: "#1e293b"}} />
-                    <Search style={{position: "absolute", left: 28, top: 22, color: "#4f46e5"}} size={30} />
+              
+              <div style={{fontSize: 20, fontWeight: 600, marginTop: 10, color: "#94a3b8", maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.6}}>
+                {schoolInfo?.name || "โรงเรียนวัดสามัคคีธรรม"} <br/>
+                <span style={{fontSize: 16, opacity: 0.8}}>ป้อนรหัสนักเรียน หรือชื่อ-นามสกุล <br/> เพื่อเริ่มต้นการค้นหาข้อมูล</span>
+              </div>
+
+              <div className="search-glass">
+                 <div style={{flex: 1, position: "relative"}}>
+                    <input 
+                       className="search-input-v5"
+                       placeholder="รหัสนักเรียน หรือชื่อ-นามสกุล" 
+                       value={search} 
+                       onChange={e => setSearch(e.target.value)} 
+                       onKeyDown={e => e.key === "Enter" && handleSearch()} 
+                    />
+                    <Search style={{position: "absolute", left: 24, top: 17, color: "rgba(255,255,255,0.4)"}} size={28} />
                  </div>
-                 <button onClick={handleSearch} disabled={loading} style={{flex: 0.8, background: "#4f46e5", border: "none", borderRadius: 30, color: "#fff", fontWeight: 950, fontSize: 22, cursor: "pointer"}}>
-                   {loading ? <RefreshCw className="animate-spin" size={30} /> : "ค้นหาข้อมูล"}
+                 <button className="search-btn-v5" onClick={handleSearch} disabled={loading}>
+                   {loading ? <RefreshCw className="animate-spin" size={24} /> : (
+                     <>ค้นหาข้อมูล <ChevronRight size={20} /></>
+                   )}
                  </button>
               </div>
-              {searchError && <div style={{marginTop: 30, color: "#f87171", fontSize: 22, fontWeight: 900}}>{searchError}</div>}
+
+              {searchError && (
+                <div style={{marginTop: 30, display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(239,68,68,0.1)", padding: "12px 25px", borderRadius: "15px", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 16, fontWeight: 700}}>
+                   <Info size={20} /> {searchError}
+                </div>
+              )}
+
            </div>
         </section>
       )}
 
+
       {student && (
         <div style={{maxWidth: 1140, margin: "0 auto", padding: "40px 16px"}} className="animate-in">
            <div className="no-print" style={{display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 15, alignItems: "center", marginBottom: 30}}>
-              <button onClick={() => {setStudent(null); setSearch("");}} style={{display: "flex", alignItems: "center", gap: 10, background: "#fff", border: "2px solid #e2e8f0", padding: "10px 20px", borderRadius: 16, fontSize: 16, fontWeight: 800, cursor: "pointer"}}>
+              <button 
+                onClick={() => {setStudent(null); setSearch("");}} 
+                className="btn-secondary-v2"
+                style={{display: "flex", alignItems: "center", gap: 10, background: "#fff", border: "2px solid #e2e8f0", padding: "12px 24px", borderRadius: 16, fontSize: 16, fontWeight: 800, cursor: "pointer", transition: "all 0.3s ease"}}
+              >
                 <ChevronLeft size={20}/> ย้อนกลับ
               </button>
               <div style={{display: "flex", gap: 12}}>
-                 <button onClick={handleDownloadPDF} disabled={downloading} style={{background: "#0ea5e9", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 16, fontSize: 16, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", gap: 10}}>
+                 <button 
+                   onClick={handleDownloadPDF} 
+                   disabled={downloading} 
+                   className="btn-primary-glow"
+                   style={{background: "#0ea5e9", color: "#fff", border: "none", padding: "12px 28px", borderRadius: 16, fontSize: 16, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "all 0.3s ease", boxShadow: "0 10px 20px rgba(14, 165, 233, 0.2)"}}
+                 >
                     <Download size={20}/> {downloading ? "..." : "ดาวน์โหลด PDF"}
                  </button>
-                 <button onClick={() => window.print()} style={{background: "#1e293b", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 16, fontSize: 16, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", gap: 10}}>
-                    <Printer size={20}/> พิมพ์งาน
+                 <button 
+                   onClick={() => window.print()} 
+                   className="btn-dark-v2"
+                   style={{background: "#1e293b", color: "#fff", border: "none", padding: "12px 28px", borderRadius: 16, fontSize: 16, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "all 0.3s ease"}}
+                 >
+                    <Printer size={20}/> พิมพ์ผลการเรียน
                  </button>
               </div>
            </div>
