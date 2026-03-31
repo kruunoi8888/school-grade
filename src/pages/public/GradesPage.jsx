@@ -263,7 +263,7 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
               
               <div style={{textAlign: "center", marginBottom: 15}}>
                  <img src={schoolInfo?.logo} style={{width: 70, height: 70, marginBottom: 8}} alt="logo" />
-                 <h2 style={{fontSize: 20, fontWeight: 900, color: "#1e293b", marginBottom: 2, fontFamily: "Kanit"}}>{isKinder ? "แบบรายงานผลความสำเร็จการประเมินพัฒนาการ" : "แบบรายงานผลการพัฒนาผู้เรียนรายบุคคล"}</h2>
+                 <h2 style={{fontSize: 20, fontWeight: 900, color: "#1e293b", marginBottom: 2, fontFamily: "Kanit"}}>{isKinder ? "แบบรายงานผลความสำเร็จการประเมินพัฒนาการ" : "แบบรายงานผลการเรียนรายบุคคล"}</h2>
                  <div style={{fontSize: 16, fontWeight: 800, color: "#4f46e5", marginBottom: 4}}>{schoolInfo?.name}</div>
                  <div style={{display: "inline-flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: "6px 20px", borderRadius: 100, fontSize: 13, fontWeight: 900, color: "#1e293b", border: "1.5px solid #e2e8f0"}}>
                     <Calendar size={15} style={{color: "#4f46e5"}}/> ปีการศึกษา {year}
