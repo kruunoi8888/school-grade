@@ -1,0 +1,11 @@
+639:                         <span style={{fontSize:16}}>👦</span>
+644:                         <span style={{fontSize:16}}>👧</span>
+824:             <div className="student-avatar">{student.gender === "ชาย" ? "👦" : "👧"}</div>
+1219:                         {s.gender==="ชาย"?"👦":"👧"}
+1363:                         }}>{g==="ชาย"?"👦 ชาย":"👧 หญิง"}</button>
+1392:                         {form.gender==="ชาย"?"👦":"👧"}
+1439:                               {s.gender==="ชาย"?"👦":"👧"}
+1506:                               {s.gender==="ชาย"?"👦":"👧"}
+1602:                     }}>{g==="ชาย"?"👦 ชาย":"👧 หญิง"}</button>
+1660:                   {viewStudent.gender==="ชาย"?"👦":"👧"}
+2080:                           {s.gender==="ชาย"?"👦":"👧"}
