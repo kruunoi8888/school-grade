@@ -298,14 +298,14 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
               
               <div style={{fontSize: 20, fontWeight: 600, marginTop: 10, color: "#94a3b8", maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.6}}>
                 {schoolInfo?.name || "โรงเรียนวัดสามัคคีธรรม"} <br/>
-                <span style={{fontSize: 16, opacity: 0.8}}>ป้อนรหัสนักเรียน หรือชื่อ-นามสกุล <br/> เพื่อเริ่มต้นการค้นหาข้อมูล</span>
+                <span style={{fontSize: 16, opacity: 0.8}}>ป้อนชื่อ - นามสกุล <br/> เพื่อเริ่มต้นการค้นหาข้อมูล</span>
               </div>
 
               <div className="search-glass">
                  <div style={{flex: 1, position: "relative"}}>
                     <input 
                        className="search-input-v5"
-                       placeholder="รหัสนักเรียน หรือชื่อ-นามสกุล" 
+                       placeholder="ป้อนชื่อ - นามสกุล" 
                        value={search} 
                        onChange={e => setSearch(e.target.value)} 
                        onKeyDown={e => e.key === "Enter" && handleSearch()} 
