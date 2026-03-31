@@ -17,6 +17,10 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
   const [downloading, setDownloading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [studentGrades, setStudentGrades] = useState([]);
+  const [zoomScale, setZoomScale] = useState(typeof window !== 'undefined' && window.innerWidth < 768 ? 0.5 : 1);
+  const [lastDist, setLastDist] = useState(0);
+
+  const checkMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
   const calculateGradeResult = (scoreVal) => {
     const s = parseFloat(scoreVal); if (isNaN(s)) return null;
@@ -134,8 +138,24 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
       return 600;
     };
 
+    const normalizeLevel = (l) => {
+      if (!l) return "";
+      return l.trim()
+        .replace("ประถมศึกษาปีที่ ", "ป.")
+        .replace("มัธยมศึกษาปีที่ ", "ม.")
+        .replace("อนุบาลปีที่ ", "อนุบาล ")
+        .replace("ป. ", "ป.")
+        .replace("ม. ", "ม.")
+        .replace(" ", ""); // Remove any spaces to match "ป.1" with "ป. 1"
+    };
+    
+    const targetNorm = normalizeLevel(studentLevel);
+
     const sortedSubjects = (subjects || [])
-      .filter(s => s.level_name === studentLevel)
+      .filter(s => {
+        const sNorm = normalizeLevel(s.level_name);
+        return sNorm === targetNorm || s.level_name === "*" || s.level_name?.includes("ทุกระดับ");
+      })
       .sort((a, b) => getSubjectPriority(a.subject_name, a.type) - getSubjectPriority(b.subject_name, b.type));
 
     sortedSubjects.forEach((item) => {
@@ -159,7 +179,10 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
     });
 
     const sortedActivities = (activities || [])
-      .filter(a => a.level_name === studentLevel || a.level_name === "*" || a.level_name?.includes("ทุกระดับ"))
+      .filter(a => {
+        const aNorm = normalizeLevel(a.level_name);
+        return aNorm === targetNorm || a.level_name === "*" || a.level_name?.includes("ทุกระดับ");
+      })
       .sort((a,b) => getSubjectPriority(a.activity_type, 'กิจกรรม') - getSubjectPriority(b.activity_type, 'กิจกรรม'));
 
     sortedActivities.forEach((act) => {
@@ -256,29 +279,64 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
         .blob-2 { width: 300px; height: 300px; background: #ec4899; bottom: -50px; right: -50px; }
 
         @media (max-width: 768px) {
-          .no-mobile { display: none; }
-          .official-table-container { display: none; }
-          .mobile-grade-card { display: block; }
-          .hero-title-v2 { font-size: 3rem; }
-          .search-glass { flex-direction: column; border-radius: 24px; padding: 10px; gap: 8px; }
-          .search-input-v5 { font-size: 18px; padding-left: 50px; height: 54px; }
-          .search-btn-v5 { height: 54px; width: 100%; justify-content: center; }
-          .info-grid-responsive { grid-template-columns: 1fr 1.2fr 2.5fr; gap: 15px; }
-          .report-document-public { padding: 30px 20px !important; border-radius: 24px !important; }
+          .search-btn-v5 { height: 50px; width: 100%; justify-content: center; font-size: 16px; }
+          .hero-title-v2 { font-size: 2.2rem; margin-bottom: 15px; }
+          .search-glass { flex-direction: column; border-radius: 20px; padding: 8px; gap: 6px; }
+          .search-input-v5 { font-size: 16px; padding-left: 50px; height: 50px; }
+          .info-grid-responsive { grid-template-columns: 1fr 1.2fr 2.5fr !important; gap: 15px !important; padding: 15px 25px !important; text-align: left !important; }
+          .student-info-item { display: block !important; align-items: flex-start !important; }
+          .student-name-full-mobile { grid-column: span 1 !important; border-top: none !important; margin-top: 0 !important; padding-top: 0 !important; border-left: 1.5px solid #e2e8f0 !important; padding-left: 15px !important; align-items: flex-start !important; }
+          .info-label-v2 { font-size: 10px !important; text-align: left !important; }
+          .info-value-v2 { font-size: 15px !important; text-align: left !important; }
+          .report-document-public { 
+             width: 800px !important; 
+             min-width: 800px !important; 
+             box-shadow: none !important;
+             margin: 0 auto !important;
+             display: block !important;
+          }
+          .report-document-wrapper { display: flex; justify-content: center; overflow: hidden; padding: 10px 0; }
+          .official-table { width: 100% !important; min-width: 100% !important; }
+          .summary-bar-responsive { flex-wrap: nowrap !important; min-width: 100% !important; border-radius: 20px !important; }
+          .btn-action-mobile { min-height: 50px; }
+          .gpa-card-mobile { padding: 8px 15px !important; gap: 10px !important; border-radius: 18px !important; }
+          .gpa-value-mobile { font-size: 32px !important; }
+          .gpa-label-mobile { font-size: 9px !important; }
+          .gpa-icon-mobile { width: 32px !important; height: 32px !important; }
+          .gpa-icon-mobile svg { width: 18px !important; height: 18px !important; }
+        }
+
+        .zoom-control-bar {
+           display: none; position: sticky; top: 10px; z-index: 50; 
+           background: rgba(255,255,255,0.8); backdrop-filter: blur(8px);
+           padding: 8px 12px; border-radius: 100px; border: 1px solid #e2e8f0;
+           box-shadow: 0 10px 25px rgba(0,0,0,0.05); gap: 10px; margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) { 
+          .zoom-control-bar { display: inline-flex; }
+          .report-document-wrapper { display: flex; justify-content: center; overflow: hidden; padding: 10px 0; }
+          .report-document-public { 
+             width: 800px !important; 
+             min-width: 800px !important; 
+             box-shadow: none !important;
+             margin: 0 auto !important;
+             display: block !important;
+          }
         }
 
         @media print { 
           .no-print, footer, .public-nav, nav, .footer-container, .mobile-nav, .mobile-nav-container, .bottom-nav { display: none !important; } 
-          .mobile-grade-card { display: none !important; }
           .official-table-container { display: block !important; }
           body, html { background: #fff !important; margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 297mm !important; overflow: hidden !important; }
           .report-document-public { 
             box-shadow: none !important; border: none !important; margin: 0 !important; 
-            width: 210mm !important; height: 297mm !important; padding: 10mm 15mm !important; 
+            width: 210mm !important; height: 297mm !important; padding: 1mm 15mm 10mm 15mm !important; 
             overflow: hidden !important;
             box-sizing: border-box !important;
           } 
           @page { size: A4; margin: 0; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
 
@@ -351,7 +409,7 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
 
 
       {student && (
-        <div style={{maxWidth: 1140, margin: "0 auto", padding: "40px 16px"}} className="animate-in">
+        <div style={{maxWidth: 1140, margin: "0 auto", padding: "10px 16px"}} className="animate-in">
            <div className="no-print" style={{display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 15, alignItems: "center", marginBottom: 30}}>
               <button 
                 onClick={() => {setStudent(null); setSearch("");}} 
@@ -379,7 +437,56 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
               </div>
            </div>
 
-           <div className="report-document-public" style={{background: "#fff", borderRadius: 40, padding: "50px 60px", border: "1px solid #e2e8f0", boxShadow: "0 40px 100px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden"}}>
+           <div className="no-print" style={{display: "flex", justifyContent: "center", position: "sticky", top: 10, zIndex: 100}}>
+              <div className="zoom-control-bar animate-in">
+                 <button onClick={() => setZoomScale(s => Math.max(0.4, s - 0.1))} style={{padding: "6px 12px", border: "none", background: "none", cursor: "pointer"}}><Search size={18} style={{transform: "scale(0.8)"}} />-</button>
+                 <div style={{width: 1, height: 15, background: "#e2e8f0"}} />
+                 <button onClick={() => setZoomScale(1)} style={{fontSize: 12, fontWeight: 800, border: "none", background: "none", cursor: "pointer", color: "#64748b"}}>{Math.round(zoomScale * 100)}%</button>
+                 <div style={{width: 1, height: 15, background: "#e2e8f0"}} />
+                 <button onClick={() => setZoomScale(s => Math.min(2, s + 0.1))} style={{padding: "6px 12px", border: "none", background: "none", cursor: "pointer"}}><Search size={18} />+</button>
+              </div>
+           </div>
+
+           <div 
+             className="report-document-wrapper" 
+             style={{
+                perspective: "1000px",
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+                paddingBottom: 40
+             }}
+             onTouchMove={(e) => {
+                if (e.touches.length === 2 && checkMobile()) {
+                  const dist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                  );
+                  if (lastDist > 0) {
+                    const ratio = dist / lastDist;
+                    setZoomScale(s => Math.min(2.5, Math.max(0.3, s * ratio)));
+                  }
+                  setLastDist(dist);
+                }
+             }}
+             onTouchEnd={() => setLastDist(0)}
+           >
+             <div className="report-document-public" style={{
+                background: "#fff", 
+                borderRadius: 40, 
+                padding: checkMobile() ? "20px 30px 40px 30px" : "20px 60px 40px 60px", 
+                border: "1px solid #e2e8f0", 
+                boxShadow: "0 40px 100px rgba(0,0,0,0.06)", 
+                position: "relative", 
+                overflow: "hidden",
+                transform: checkMobile() ? `scale(${zoomScale})` : "none",
+                transformOrigin: "top center",
+                transition: "transform 0.1s ease-out",
+                width: checkMobile() ? 800 : "100%",
+                maxWidth: 1000,
+                minWidth: checkMobile() ? 800 : "auto",
+                margin: "0 auto"
+             }}>
               {/* Official Background Watermark */}
               <div style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%) rotate(-25deg)", opacity: 0.05, width: 400, height: 400, pointerEvents: "none", zIndex: 0, display: "flex", alignItems: "center", justifyContent: "center"}}>
                  <img src={schoolInfo?.logo} style={{width: "100%", height: "auto"}} alt="watermark" />
@@ -387,8 +494,8 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
 
               <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 10, background: "linear-gradient(to right, #38bdf8, #4f46e5)", borderRadius: "40px 40px 0 0"}} />
               
-              <div style={{textAlign: "center", marginBottom: 15}}>
-                 <img src={schoolInfo?.logo} style={{width: 70, height: 70, marginBottom: 8}} alt="logo" />
+              <div style={{textAlign: "center", marginBottom: 8}}>
+                 <img src={schoolInfo?.logo} style={{width: 50, height: 50, marginBottom: 2}} alt="logo" />
                  <h2 style={{fontSize: 20, fontWeight: 900, color: "#1e293b", marginBottom: 2, fontFamily: "Kanit"}}>{isKinder ? "แบบรายงานผลความสำเร็จการประเมินพัฒนาการ" : "แบบรายงานผลการเรียนรายบุคคล"}</h2>
                  <div style={{fontSize: 16, fontWeight: 800, color: "#4f46e5", marginBottom: 4}}>{schoolInfo?.name}</div>
                  <div style={{display: "inline-flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: "6px 20px", borderRadius: 100, fontSize: 13, fontWeight: 900, color: "#1e293b", border: "1.5px solid #e2e8f0"}}>
@@ -397,9 +504,9 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
               </div>
 
               <div className="info-grid-responsive" style={{background: "#f8fafc", padding: "12px 24px", borderRadius: 16, marginBottom: 20, display: "grid", gridTemplateColumns: "1fr 1.2fr 2.5fr", gap: 15}}>
-                 <div style={{textAlign: "left"}}>
-                    <div style={{fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 2}}>เลขที่</div>
-                    <div style={{fontSize: 15, fontWeight: 950}}>
+                 <div className="student-info-item" style={{textAlign: "left"}}>
+                    <div className="info-label-v2" style={{fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 2}}>เลขที่</div>
+                    <div className="info-value-v2" style={{fontSize: 15, fontWeight: 950}}>
                       {(() => {
                         if (student.student_no) return student.student_no;
                         const classStudents = (students || [])
@@ -421,7 +528,7 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
 
               {isKinder ? (
                 <div className="kg-report-v2 animate-in" style={{marginTop: 20}}>
-                   <div style={{textAlign: "center", marginBottom: 15}}>
+                   <div style={{textAlign: "center", marginBottom: 8}}>
                       <h3 style={{fontSize: 18, fontWeight: 950, color: "#1e293b", marginBottom: 4}}>สรุปผลการประเมินพัฒนาการ</h3>
                       <p style={{fontSize: 11, color: "#64748b", fontWeight: 700}}>(ดีมาก=3, ดี=2, พอใช้=1)</p>
                    </div>
@@ -491,38 +598,9 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
                     </table>
                   </div>
 
-                  <div className="no-print">
-                    {displayRows.map(row => {
-                      const scoreNum = parseFloat(row.result);
-                      return (
-                        <div key={row.no} className="mobile-grade-card">
-                          <div style={{display: "flex", justifyContent: "space-between", marginBottom: 12}}>
-                              <div style={{fontSize: 12, fontWeight: 800, color: "#64748b"}}>{row.code} • {row.type}</div>
-                              <div style={{background: "#f1f5f9", padding: "4px 10px", borderRadius: 8, fontSize: 12, fontWeight: 800}}>ลำดับ {row.no}</div>
-                          </div>
-                          <div style={{fontSize: 20, fontWeight: 950, color: "#1e293b", marginBottom: 15}}>{row.name}</div>
-                          <div style={{display: "flex", justifyContent: "space-between", background: "#f8fafc", padding: "12px 16px", borderRadius: 12, gap: 10}}>
-                              <div style={{flex: 1}}>
-                                <div style={{fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 4}}>นก./ชม.</div>
-                                <div style={{fontSize: 18, fontWeight: 900}}>{row.hours}</div>
-                              </div>
-                              <div style={{flex: 1, textAlign: "center", borderLeft: "1px solid #e2e8f0", borderRight: "1px solid #e2e8f0"}}>
-                                <div style={{fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 4}}>คะแนน</div>
-                                <div style={{fontSize: 18, fontWeight: 900}}>{row.score || "-"}</div>
-                              </div>
-                              <div style={{flex: 1, textAlign: "right"}}>
-                                <div style={{fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 4}}>เกรด</div>
-                                <div style={{fontSize: 22, fontWeight: 950, color: (scoreNum >= 3 || row.result === "ผ") ? "#059669" : "#4f46e5"}}>
-                                    {row.result}
-                                </div>
-                              </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {/* Mobile cards removed for professional table view */}
 
-                   <div style={{marginTop: 30, background: "linear-gradient(to right, #f8fafc, #fff, #f8fafc)", padding: "20px 30px", borderRadius: 32, border: "1.5px solid #e2e8f0", boxShadow: "0 20px 50px rgba(0,0,0,0.03)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, position: "relative"}}>
+                   <div className="summary-bar-responsive" style={{marginTop: 30, background: "linear-gradient(to right, #f8fafc, #fff, #f8fafc)", padding: "20px 30px", borderRadius: 32, border: "1.5px solid #e2e8f0", boxShadow: "0 20px 50px rgba(0,0,0,0.03)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, position: "relative"}}>
                       <div style={{display: "flex", alignItems: "center", gap: 30, flex: 1}}>
                          <div style={{display: "flex", alignItems: "center", gap: 15}}>
                             <div style={{width: 48, height: 48, borderRadius: 16, background: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #d1fae5"}}>
@@ -547,24 +625,25 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
                          </div>
                       </div>
 
-                      <div style={{background: "linear-gradient(135deg, #4f46e5, #7c3aed)", padding: "12px 35px", borderRadius: 24, color: "#fff", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 15px 35px rgba(79, 70, 229, 0.3)", position: "relative", overflow: "hidden"}}>
-                         {/* Subtle Glow Sparkle */}
-                         <div style={{position: "absolute", top: -10, right: -10, opacity: 0.2}}>
-                            <Award size={60} strokeWidth={1} />
+                         <div className="gpa-card-mobile" style={{background: "linear-gradient(135deg, #4f46e5, #7c3aed)", backgroundColor: "#4f46e5", padding: "12px 35px", borderRadius: 24, color: "#fff", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 15px 35px rgba(79, 70, 229, 0.2)", border: "1px solid rgba(255,255,255,0.1)", position: "relative", overflow: "hidden"}}>
+                            {/* Subtle Glow Sparkle */}
+                            <div style={{position: "absolute", top: -10, right: -10, opacity: 0.2}}>
+                               <Award size={60} strokeWidth={1} />
+                            </div>
+                            
+                            <div style={{textAlign: "right", position: "relative", zIndex: 1}}>
+                               <div className="gpa-label-mobile" style={{fontSize: 11, fontWeight: 800, opacity: 0.8, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 2}}>เกรดเฉลี่ย</div>
+                               <div className="gpa-value-mobile" style={{fontSize: 48, fontWeight: 950, lineHeight: 1, letterSpacing: "-1px"}}>{gpa}</div>
+                            </div>
+                            <div className="gpa-icon-mobile" style={{width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center"}}>
+                               <Award size={24} style={{color: "#fff"}} />
+                            </div>
                          </div>
-                         
-                         <div style={{textAlign: "right", position: "relative", zIndex: 1}}>
-                            <div style={{fontSize: 11, fontWeight: 800, opacity: 0.8, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 2}}>เกรดเฉลี่ย</div>
-                            <div style={{fontSize: 48, fontWeight: 950, lineHeight: 1, letterSpacing: "-1px"}}>{gpa}</div>
-                         </div>
-                         <div style={{width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)"}}>
-                            <Award size={24} style={{color: "#fff"}} />
-                         </div>
-                      </div>
                    </div>
                 </>
               )}
-           </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
