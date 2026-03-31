@@ -4,7 +4,7 @@ import {
   Printer, Star, User, Calendar, X, Download, 
   ChevronLeft, Info, Baby, CheckCircle2, Sparkles,
   Award, TrendingUp, ShieldCheck, RefreshCw,
-  Heart, Users, Brain, Activity, ClipboardList
+  Heart, Users, Brain, Activity, ClipboardList, Lightbulb
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
@@ -110,7 +110,7 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
     
     const getSubjectPriority = (name = "", type = "") => {
       const n = name.toLowerCase();
-      if (type === 'กิจกรรมพัฒนาผู้เรียน') {
+      if (type.includes('กิจกรรม')) {
         if (n.includes("แนะแนว")) return 1001;
         if (n.includes("ลูกเสือ") || n.includes("เนตรนารี")) return 1002;
         if (n.includes("ชุมนุม") || n.includes("ชมรม")) return 1003;
@@ -253,7 +253,12 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
               </div>
            </div>
 
-           <div className="report-document-public" style={{background: "#fff", borderRadius: 40, padding: "50px 60px", border: "1px solid #e2e8f0", boxShadow: "0 40px 100px rgba(0,0,0,0.06)", position: "relative"}}>
+           <div className="report-document-public" style={{background: "#fff", borderRadius: 40, padding: "50px 60px", border: "1px solid #e2e8f0", boxShadow: "0 40px 100px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden"}}>
+              {/* Official Background Watermark */}
+              <div style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%) rotate(-25deg)", opacity: 0.05, width: 400, height: 400, pointerEvents: "none", zIndex: 0, display: "flex", alignItems: "center", justifyContent: "center"}}>
+                 <img src={schoolInfo?.logo} style={{width: "100%", height: "auto"}} alt="watermark" />
+              </div>
+
               <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 10, background: "linear-gradient(to right, #38bdf8, #4f46e5)", borderRadius: "40px 40px 0 0"}} />
               
               <div style={{textAlign: "center", marginBottom: 15}}>
@@ -296,10 +301,10 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
                    </div>
                    <div style={{display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 15, marginBottom: 20}}>
                       {[
-                        { label: "ด้านร่างกาย", color: "#ecfdf5", text: "#10b981", key: "ร่างกาย", Icon: Heart },
-                        { label: "ด้านอารมณ์-จิตใจ", color: "#eff6ff", text: "#3b82f6", key: "อารมณ์", Icon: Brain },
-                        { label: "ด้านสังคม", color: "#fffbeb", text: "#f59e0b", key: "สังคม", Icon: Users },
-                        { label: "ด้านสติปัญญา", color: "#f5f3ff", text: "#8b5cf6", key: "สติปัญญา", Icon: Sparkles }
+                        { label: "ด้านร่างกาย", color: "#ecfdf5", text: "#10b981", key: "ร่างกาย", Icon: Activity },
+                        { label: "ด้านอารมณ์-จิตใจ", color: "#fff1f2", text: "#f43f5e", key: "อารมณ์", Icon: Heart },
+                        { label: "ด้านสังคม", color: "#fffbeb", text: "#f2920c", key: "สังคม", Icon: Users },
+                        { label: "ด้านสติปัญญา", color: "#eff6ff", text: "#2563eb", key: "สติปัญญา", Icon: Lightbulb }
                       ].map((card, i) => {
                         const grade = studentGrades.find(g => {
                           const subjName = subjects.find(s => s.id === g.subject_id)?.subject_name || "";
