@@ -307,7 +307,18 @@ function GradesPage({ schoolInfo, currentAcademicYear, academicYears, students, 
               
               <div style={{fontSize: 20, fontWeight: 600, marginTop: 10, color: "#94a3b8", maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.6}}>
                 {schoolInfo?.name || "โรงเรียนวัดสามัคคีธรรม"} <br/>
-                <span style={{fontSize: 16, opacity: 0.8}}>ใส่ชื่อ-นามสกุลเพื่อค้นหา</span>
+                <div style={{display: "flex", justifyContent: "center", gap: 15, marginTop: 15, flexWrap: "wrap"}}>
+                  {[
+                    { s: "1", t: "ป้อนชื่อ-นามสกุล" },
+                    { s: "2", t: "กดปุ่มค้นหา" },
+                    { s: "3", t: "ตรวจสอบผลการเรียน" }
+                  ].map((step, idx) => (
+                    <div key={idx} style={{display: "flex", alignItems: "center", gap: 8, fontSize: 14, background: "rgba(255,255,255,0.03)", padding: "6px 16px", borderRadius: "100px", border: "1px solid rgba(255,255,255,0.08)", color: "#94a3b8", fontWeight: 700}}>
+                       <span style={{background: "linear-gradient(135deg, #4f46e5, #7c3aed)", width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 950, color: "#fff", boxShadow: "0 4px 10px rgba(79, 70, 229, 0.3)"}}>{step.s}</span>
+                       {step.t}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="search-glass">
